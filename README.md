@@ -1,1 +1,1 @@
-# yield-farm
+Cosmic Yield Farm

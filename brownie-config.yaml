@@ -1,0 +1,41 @@
+
+compiler:
+  solc:
+    remappings:
+      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@2.5.1'
+      - '@chainlink=smartcontractkit/chainlink-brownie-contracts@0.2.2'
+
+dependencies:
+    - 'OpenZeppelin/openzeppelin-contracts@2.5.1'
+    - smartcontractkit/chainlink-brownie-contracts@0.2.2
+
+dotenv: .env
+
+test_wallets:
+  from_key: ${TEST_PRIVATE_KEY}
+  from_key_2: ${TEST_PRIVATE_KEY_2}
+
+wallets:
+  from_key: ${MAINNET_PRIVATE_KEY}
+
+settings:
+  gas_limit: "207404400"
+
+igo_token_params:
+  name: 'Cosmic IGO'
+  symbol: 'COSMICIGO'
+  price_numerator: 3
+  price_denominator: 10
+  max_amount: 12500000000000000000000000
+  max_presale_mint: 2500000000000000000000000 # Value with 6 decimals like USDC
+  max_presale_mint_in_usdc: 2500000000000
+  multisig_test_address: ${TEST_MULTISIG_ADDRESS}
+  multisig_mainnet_address: ${MAINNET_MULTISIG_ADDRESS}
+
+payment_coin_params:
+  address: '0x...'
+
+
+chainlink_oracle:
+  avax_testnet_price_feed_address: 5498BB86BC934c8D34FDA08E81D444153d0D06aD
+
