@@ -8,7 +8,7 @@ import '@openzeppelin/contracts/utils/Address.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
 
 // TicketToken.
-contract TicketToken is BEP20('Ticket Token', 'TICKET') {
+contract TicketToken is IERC20('Ticket Token', 'TICKET') {
     /// @notice Creates `_amount` token to `_to`. Must only be called by the owner (MasterChef).
     function mint(address _to, uint256 _amount) public onlyOwner {
         _mint(_to, _amount);
