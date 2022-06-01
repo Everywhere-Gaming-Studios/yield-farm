@@ -18,19 +18,8 @@ contract MasterChefTicket is Ownable {
 
     // Info of each user.
     struct UserInfo {
-        uint256 amount;     // How many LP tokens the user has provided.
-        uint256 rewardDebt; // Reward debt. See explanation below.
-        //
-        // We do some fancy math here. Basically, any point in time, the amount of TICKETs
-        // entitled to a user but is pending to be distributed is:
-        //
-        //   pending reward = (user.amount * pool.accTicketPerShare) - user.rewardDebt
-        //
-        // Whenever a user deposits or withdraws LP tokens to a pool. Here's what happens:
-        //   1. The pool's `accTicketPerShare` (and `lastRewardBlock`) gets updated.
-        //   2. User receives the pending reward sent to his/her address.
-        //   3. User's `amount` gets updated.
-        //   4. User's `rewardDebt` gets updated.
+        uint256 amount;     
+        uint256 rewardDebt; 
     }
 
     // Info of each pool.
@@ -38,12 +27,12 @@ contract MasterChefTicket is Ownable {
         IIERC20 lpToken;           // Address of LP token contract.
         uint256 allocPoint;       // How many allocation points assigned to this pool. TICKETs to distribute per block.
         uint256 lastRewardBlock;  // Last block number that TICKETs distribution occurs.
-        uint256 accTicketPerShare; // Accumulated TICKETs per share, times 1e12. See below.
+        uint256 accTicketPerShare; // Accumulated TICKETs per share, times 1e12.
     }
 
     // The TICKET TOKEN!
     Ticket public ticket;
-    // The SYRUP TOKEN!
+    // The RECEIPT TOKEN!
     TicketReceipt public receipt;
     // Dev address.
     address public devaddr;
@@ -52,10 +41,16 @@ contract MasterChefTicket is Ownable {
     // Bonus muliplier for early ticket makers.
     uint256 public BONUS_MULTIPLIER = 1;
 
+    //DepositFee
+    uint256 public depositFee;
+    //WithdrawFee
+    uint256 public withdrawFee;
+
+
     PoolInfo[] public poolInfo;
     // Info of each user that stakes LP tokens.
     mapping (uint256 => mapping (address => UserInfo)) public userInfo;
-    // Total allocation poitns. Must be the sum of all allocation points in all pools.
+    // Total allocation points. Must be the sum of all allocation points in all pools.
     uint256 public totalAllocPoint = 0;
     // The block number when TICKET mining starts.
     uint256 public startBlock;
@@ -70,13 +65,17 @@ contract MasterChefTicket is Ownable {
         TicketReceipt _receipt,
         address _devaddr,
         uint256 _ticketPerBlock,
-        uint256 _startBlock
+        uint256 _startBlock,
+        uint256 _depositFee,
+        uint256 _withdrawFee
     ) public {
         ticket = _ticket;
         receipt = _receipt;
         devaddr = _devaddr;
         ticketPerBlock = _ticketPerBlock;
         startBlock = _startBlock;
+        depositFee = _depositFee;
+        withdrawFee = _withdrawFee;
 
         // staking pool
         poolInfo.push(PoolInfo({
@@ -88,6 +87,14 @@ contract MasterChefTicket is Ownable {
 
         totalAllocPoint = 1000;
 
+    }
+
+    function updateDepositFee(uint256 _depositFee) public onlyOwner {
+        depositFee = _depositFee;
+    }
+
+    function updateWithdrawFee(uint256 _withdrawFee) public onlyOwner {
+        withdrawFee = _withdrawFee;
     }
 
     function updateMultiplier(uint256 multiplierNumber) public onlyOwner {
@@ -203,8 +210,16 @@ contract MasterChefTicket is Ownable {
             }
         }
         if (_amount > 0) {
-            pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
-            user.amount = user.amount.add(_amount);
+            if (depositFee > 0) {
+                uint256 _depositFee = _amount.mul(depositFee).div(10000);
+                uint256 _namount = _amount.sub(depositFee);
+                pool.lpToken.safeTransferFrom(address(msg.sender), devaddr, _depositFee);
+                pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _namount);
+                user.amount = user.amount.add(_amount).sub(depositFee);
+            } else {
+                pool.lpToken.safeTransferFrom(address(msg.sender), address(this), _amount);
+                user.amount = user.amount.add(_amount);            
+            }
         }
         user.rewardDebt = user.amount.mul(pool.accTicketPerShare).div(1e12);
         emit Deposit(msg.sender, _pid, _amount);
@@ -224,8 +239,16 @@ contract MasterChefTicket is Ownable {
             safeTicketTransfer(msg.sender, pending);
         }
         if(_amount > 0) {
-            user.amount = user.amount.sub(_amount);
-            pool.lpToken.safeTransfer(address(msg.sender), _amount);
+            if (withdrawFee > 0) {
+                uint256 _withdrawFee = _amount.mul(withdrawFee).div(10000);
+                uint256 _namount = _amount.
+                pool.lpToken.safeTransfer(devaddr, _withdrawFee);
+                pool.lpToken.safeTransfer(address(this), _namount);
+                user.amount = user.amount.sub(_amount);
+            } else {
+                pool.lpToken.safeTransfer(address(msg.sender), _amount);
+                user.amount = user.amount.sub(_amount);
+            }
         }
         user.rewardDebt = user.amount.mul(pool.accTicketPerShare).div(1e12);
         emit Withdraw(msg.sender, _pid, _amount);
@@ -286,15 +309,9 @@ contract MasterChefTicket is Ownable {
     function safeTicketTransfer(address _to, uint256 _amount) internal {
         receipt.safeTicketTransfer(_to, _amount);
     }
-    
 
-    // Mints new Ticket to make new investment phases in the future. PUBLICLY ANNOUNCED WHEN USED.
-    function safeInvestmentRound(address _to, uint256 _amount) public onlyOwner {
-        ticket.mint(_to, _amount);
-    }
-
-    // Burns Liana tokens of an user. USED ONLY TO PREVENT RUG PULLS.
-    function safeLianaBurn(address _address, uint256 _amount) public onlyOwner {
+    // Burns Ticket Receipt tokens of an user. USED ONLY TO PREVENT RUG PULLS.
+    function safeTicketReceiptBurn(address _address, uint256 _amount) public onlyOwner {
         receipt.burn(_address, _amount);
     }
 
