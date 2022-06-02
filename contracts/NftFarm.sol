@@ -1,4 +1,4 @@
-// contracts/Farming.sol
+// contracts/NftFarm.sol
 // SPDX-License-Identifier: MIT
 pragma solidity 0.7.4;
 
@@ -8,7 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 
-contract Farming is Ownable {
+contract NftFarm is Ownable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     
@@ -230,24 +230,24 @@ contract Farming is Ownable {
 
     // Configs
     
-    function updateDepositWithdrawFee(uint256 _depositWithdrawFee) external onlyOperator {
+    function updateDepositWithdrawFee(uint256 _depositWithdrawFee) public onlyOwner {
         require(_depositWithdrawFee < 3000, "deposit fee too high");
         depositWithdrawFee = _depositWithdrawFee;
         emit UpdateDepositWithdrawFee(_depositWithdrawFee);
     }
 
-    function updateMaxWithdrawFee(uint256 _id, uint256 _Fee) external onlyOperator {
+    function updateMaxWithdrawFee(uint256 _id, uint256 _Fee) public onlyOwner {
         require(_Fee < 10000, "deposit fee too high");
         maxWithdrawFee[_id] = _Fee;
         emit UpdateMaxWithdrawFee(_Fee);
     }
 
-    function updateFeeTime(uint256 _id, uint256 _time) external onlyOperator {
+    function updateFeeTime(uint256 _id, uint256 _time) public onlyOwner {
         require(_time < 31 days, "deposit fee too high");
         feePeriod[_id] = _time * 1 hours;
     }
 
-    function updateTreasuryAddress(address _treasuryAddress) external onlyOperator {
+    function updateTreasuryAddress(address _treasuryAddress) public onlyOwner {
         treasuryAddress = _treasuryAddress;
         emit UpdateTreasuryAddress(_treasuryAddress);
     }
